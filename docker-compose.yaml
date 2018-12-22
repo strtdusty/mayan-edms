@@ -13,20 +13,12 @@ services:
       - /datadrive/mayan-edms/postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
     networks: 
       - back-tier
   mayan-edms:
     restart: always
     container_name: mayan-edms
     image: mayanedms/mayanedms:latest
-    depends_on:
-      db:
-        condition: service_healthy
     environment:
       MAYAN_DATABASE_ENGINE: django.db.backends.postgresql
       MAYAN_DATABASE_HOST: db
