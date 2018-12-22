@@ -18,6 +18,8 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    networks: 
+      - back-tier
   mayan-edms:
     restart: always
     container_name: mayan-edms
@@ -40,6 +42,9 @@ services:
       - "8000:8000"
     volumes:
       - /datadrive/mayan-edms/media:/var/lib/mayan
+    networks:
+      - proxy-tier
+      - back-tier
 
   nginx:
     restart: always
@@ -55,6 +60,8 @@ services:
       - "/etc/nginx/vhost.d"
       - "/usr/share/nginx/html"
       - "./certs:/etc/nginx/certs:ro"
+    networks:
+      - proxy-tier
 
   docker-gen:
     restart: always
@@ -82,3 +89,9 @@ services:
     environment:
       - NGINX_DOCKER_GEN_CONTAINER=docker-gen
       - NGINX_PROXY_CONTAINER=nginx
+
+networks:
+  proxy-tier:
+    external:
+      name: nginx-proxy
+  back-tier:
