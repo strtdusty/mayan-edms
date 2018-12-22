@@ -22,7 +22,7 @@ services:
       POSTGRES_PASSWORD: mayanuserpass
       POSTGRES_USER: mayan
     volumes:
-      - db:/datadrive/mayan-edms/postgres
+      - /datadrive/mayan-edms/postgres:/var/lib/postgresql/data
     ports:
       - "5432:5432"
     healthcheck:
@@ -50,7 +50,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - app:/datadrive/mayan-edms/media
+      - /datadrive/mayan-edms/media:/var/lib/mayan
 
   nginx:
       restart: always
