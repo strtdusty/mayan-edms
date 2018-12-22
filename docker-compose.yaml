@@ -47,7 +47,7 @@ services:
       LETSENCRYPT_EMAIL: jeff.s.bailey@gmail.com
       VIRTUAL_HOST: sdocs.alpineanimalhospitalcda.com
     ports:
-      - "80:8000"
+      - "8000:8000"
     volumes:
       - app:/datadrive/mayan-edms/media
 
@@ -58,6 +58,7 @@ services:
     container_name: ${NGINX_WEB:-nginx-web}
     restart: always
     ports:
+      - "10.1.64.4:${DOCKER_HTTP:-80}:80"
       - "10.1.64.4:${DOCKER_HTTPS:-443}:443"
     volumes:
       - ${NGINX_FILES_PATH:-./data}/conf.d:/etc/nginx/conf.d
