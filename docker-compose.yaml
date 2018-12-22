@@ -46,6 +46,7 @@ services:
       LETSENCRYPT_HOST: sdocs.alpineanimalhospitalcda.com
       LETSENCRYPT_EMAIL: jeff.s.bailey@gmail.com
       VIRTUAL_HOST: sdocs.alpineanimalhospitalcda.com
+      VIRTUAL_PORT: 8000
     ports:
       - "8000:8000"
     volumes:
