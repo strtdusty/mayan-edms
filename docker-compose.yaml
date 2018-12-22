@@ -19,7 +19,7 @@ services:
     image: postgres:9.5                                                                               
     environment:                                                                                      
       POSTGRES_DB: mayan                                                                              
-      POSTGRES_PASSWORD: mayanuserpass333                                                             
+      POSTGRES_PASSWORD: mayanuserpass                                                            
       POSTGRES_USER: mayan                                                                            
     volumes:                                                                                          
       - db:/datadrive/mayan-edms/postgres                                                             
@@ -40,7 +40,7 @@ services:
       MAYAN_DATABASE_ENGINE: django.db.backends.postgresql
       MAYAN_DATABASE_HOST: db
       MAYAN_DATABASE_NAME: mayan
-      MAYAN_DATABASE_PASSWORD: mayanuserpass333
+      MAYAN_DATABASE_PASSWORD: mayanuserpass
       MAYAN_DATABASE_USER: mayan
       MAYAN_DATABASE_CONN_MAX_AGE: 60
     ports:
