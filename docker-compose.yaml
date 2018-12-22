@@ -17,6 +17,8 @@ services:
       - back-tier
   mayan-edms:
     restart: always
+    depends_on: 
+    - db
     container_name: mayan-edms
     image: mayanedms/mayanedms:latest
     environment:
@@ -41,7 +43,9 @@ services:
     image: jwilder/nginx-proxy                                      
     ports:                                                          
       - "80:80"                                                     
-      - "443:443"                                                   
+      - "443:443"           
+    depends_on: 
+      - mayan-edms                                        
     volumes:                                                        
       - "/etc/nginx/vhost.d"                                        
       - "/usr/share/nginx/html"                                     
