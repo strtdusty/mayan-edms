@@ -58,7 +58,6 @@ services:
     container_name: ${NGINX_WEB:-nginx-web}
     restart: always
     ports:
-      - "10.1.64.4:${DOCKER_HTTP:-80}:80"
       - "10.1.64.4:${DOCKER_HTTPS:-443}:443"
     volumes:
       - ${NGINX_FILES_PATH:-./data}/conf.d:/etc/nginx/conf.d
