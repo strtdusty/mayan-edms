@@ -5,16 +5,10 @@ volumes:
     driver: local
   db:
     driver: local
-  results:
-    driver: local
 
 services:
-  results:
-    container_name: mayan-edms-results
-    image: healthcheck/redis
-    volumes:
-      - results:/data
   db:
+    restart: always
     container_name: mayan-edms-postgres
     image: postgres:9.5
     environment:
@@ -31,6 +25,7 @@ services:
       timeout: 5s
       retries: 5
   mayan-edms:
+    restart: always
     container_name: mayan-edms
     image: mayanedms/mayanedms:latest
     depends_on:
