@@ -1,41 +1,41 @@
-version: '2.1'                                                                                        
-                                                                                                      
-volumes:                                                                                              
-    app:                                                                                              
-        driver: local                                                                                 
-    db:                                                                                               
-        driver: local                                                                                 
-    results:                                                                                          
-        driver: local                                                                                 
-                                                                                                      
-services:                                                                                             
-  results:                                                                                            
-    container_name: mayan-edms-results                                                                
-    image: healthcheck/redis                                                                          
-    volumes:                                                                                          
-      - results:/data                                                                                 
-  db:                                                                                                 
-    container_name: mayan-edms-postgres                                                               
-    image: postgres:9.5                                                                               
-    environment:                                                                                      
-      POSTGRES_DB: mayan                                                                              
-      POSTGRES_PASSWORD: mayanuserpass                                                            
-      POSTGRES_USER: mayan                                                                            
-    volumes:                                                                                          
-      - db:/datadrive/mayan-edms/postgres                                                             
-    ports:                                                                                            
-      - "5432:5432"                                                                                   
-    healthcheck:                                                                                      
-      test: ["CMD-SHELL", "pg_isready -U postgres"]                                                   
-      interval: 10s                                                                                   
-      timeout: 5s                                                                                     
-      retries: 5                                                                                      
-  mayan-edms:                                                                                         
-    container_name: mayan-edms                                                                        
-    image: mayanedms/mayanedms:latest                                                                 
-    depends_on:                                                                                       
-      db:                                                                                             
-        condition: service_healthy                                                                    
+version: "2.1"
+
+volumes:
+  app:
+    driver: local
+  db:
+    driver: local
+  results:
+    driver: local
+
+services:
+  results:
+    container_name: mayan-edms-results
+    image: healthcheck/redis
+    volumes:
+      - results:/data
+  db:
+    container_name: mayan-edms-postgres
+    image: postgres:9.5
+    environment:
+      POSTGRES_DB: mayan
+      POSTGRES_PASSWORD: mayanuserpass
+      POSTGRES_USER: mayan
+    volumes:
+      - db:/datadrive/mayan-edms/postgres
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  mayan-edms:
+    container_name: mayan-edms
+    image: mayanedms/mayanedms:latest
+    depends_on:
+      db:
+        condition: service_healthy
     environment:
       MAYAN_DATABASE_ENGINE: django.db.backends.postgresql
       MAYAN_DATABASE_HOST: db
@@ -43,7 +43,74 @@ services:
       MAYAN_DATABASE_PASSWORD: mayanuserpass
       MAYAN_DATABASE_USER: mayan
       MAYAN_DATABASE_CONN_MAX_AGE: 60
+      LETSENCRYPT_HOST: sdocs.alpineanimalhospitalcda.com
+      LETSENCRYPT_EMAIL: jeff.s.bailey@gmail.com
+      VIRTUAL_HOST: sdocs.alpineanimalhospitalcda.com
     ports:
       - "80:8000"
     volumes:
       - app:/datadrive/mayan-edms/media
+
+  nginx-web:
+    image: nginx
+    labels:
+      com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy: "true"
+    container_name: ${NGINX_WEB:-nginx-web}
+    restart: always
+    ports:
+      - "10.1.64.4:${DOCKER_HTTP:-80}:80"
+      - "10.1.64.4:${DOCKER_HTTPS:-443}:443"
+    volumes:
+      - ${NGINX_FILES_PATH:-./data}/conf.d:/etc/nginx/conf.d
+      - ${NGINX_FILES_PATH:-./data}/vhost.d:/etc/nginx/vhost.d
+      - ${NGINX_FILES_PATH:-./data}/html:/usr/share/nginx/html
+      - ${NGINX_FILES_PATH:-./data}/certs:/etc/nginx/certs:ro
+      - ${NGINX_FILES_PATH:-./data}/htpasswd:/etc/nginx/htpasswd:ro
+    logging:
+      driver: ${NGINX_WEB_LOG_DRIVER:-json-file}
+      options:
+        max-size: ${NGINX_WEB_LOG_MAX_SIZE:-4m}
+        max-file: ${NGINX_WEB_LOG_MAX_FILE:-10}
+
+  nginx-gen:
+    image: jwilder/docker-gen
+    command: -notify-sighup ${NGINX_WEB:-nginx-web} -watch -wait 5s:30s /etc/docker-gen/templates/nginx.tmpl /etc/nginx/conf.d/default.conf
+    container_name: ${DOCKER_GEN:-nginx-gen}
+    restart: always
+    volumes:
+      - ${NGINX_FILES_PATH:-./data}/conf.d:/etc/nginx/conf.d
+      - ${NGINX_FILES_PATH:-./data}/vhost.d:/etc/nginx/vhost.d
+      - ${NGINX_FILES_PATH:-./data}/html:/usr/share/nginx/html
+      - ${NGINX_FILES_PATH:-./data}/certs:/etc/nginx/certs:ro
+      - ${NGINX_FILES_PATH:-./data}/htpasswd:/etc/nginx/htpasswd:ro
+      - /var/run/docker.sock:/tmp/docker.sock:ro
+      - ./nginx.tmpl:/etc/docker-gen/templates/nginx.tmpl:ro
+    logging:
+      driver: ${NGINX_GEN_LOG_DRIVER:-json-file}
+      options:
+        max-size: ${NGINX_GEN_LOG_MAX_SIZE:-2m}
+        max-file: ${NGINX_GEN_LOG_MAX_FILE:-10}
+
+  nginx-letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion
+    container_name: ${LETS_ENCRYPT:-nginx-letsencrypt}
+    restart: always
+    volumes:
+      - ${NGINX_FILES_PATH:-./data}/conf.d:/etc/nginx/conf.d
+      - ${NGINX_FILES_PATH:-./data}/vhost.d:/etc/nginx/vhost.d
+      - ${NGINX_FILES_PATH:-./data}/html:/usr/share/nginx/html
+      - ${NGINX_FILES_PATH:-./data}/certs:/etc/nginx/certs:rw
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      NGINX_DOCKER_GEN_CONTAINER: ${DOCKER_GEN:-nginx-gen}
+      NGINX_PROXY_CONTAINER: ${NGINX_WEB:-nginx-web}
+    logging:
+      driver: ${NGINX_LETSENCRYPT_LOG_DRIVER:-json-file}
+      options:
+        max-size: ${NGINX_LETSENCRYPT_LOG_MAX_SIZE:-2m}
+        max-file: ${NGINX_LETSENCRYPT_LOG_MAX_FILE:-10}
+
+networks:
+  default:
+    external:
+      name: ${NETWORK:-webproxy}
